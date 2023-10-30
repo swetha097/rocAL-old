@@ -46,6 +46,7 @@ extern "C" RocalTensor ROCAL_API_CALL rocalSequenceRearrange(RocalContext p_cont
                                                              std::vector<unsigned int> &new_order,
                                                              bool is_output);
 
+extern "C" RocalTensor ROCAL_API_CALL rocalExternalSource(RocalContext context, RocalTensor p_input, const char* file_path, const char* input, int dtype, int len, bool is_output);
 /*! \brief Resize images.
  * \note Accepts U8 and RGB24 input.
  * \ingroup group_rocal_augmentations
@@ -274,7 +275,7 @@ extern "C" RocalTensor ROCAL_API_CALL rocalGammaFixed(RocalContext context, Roca
  */
 extern "C" RocalTensor ROCAL_API_CALL rocalContrast(RocalContext context, RocalTensor input,
                                                     bool is_output,
-                                                    RocalFloatParam contrast_factor = NULL, RocalFloatParam contrast_center = NULL,
+                                                    RocalTensor contrast_factor = NULL, RocalTensor contrast_center = NULL,
                                                     RocalTensorLayout output_layout = ROCAL_NONE,
                                                     RocalTensorOutputType output_datatype = ROCAL_UINT8);
 
@@ -339,7 +340,7 @@ extern "C" RocalTensor ROCAL_API_CALL rocalFlipFixed(RocalContext context, Rocal
  */
 extern "C" RocalTensor ROCAL_API_CALL rocalBlur(RocalContext context, RocalTensor input,
                                                 bool is_output,
-                                                RocalIntParam kernel_size = NULL,
+                                                RocalTensor kernel_size = NULL,
                                                 RocalTensorLayout output_layout = ROCAL_NONE,
                                                 RocalTensorOutputType output_datatype = ROCAL_UINT8);
 
