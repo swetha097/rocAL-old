@@ -158,6 +158,6 @@ extern "C" RocalTensor ROCAL_API_CALL rocalCreateFloatRand(RocalContext p_contex
  * \param [in] updating_obj Rocal Float Param to update
  * \return rocal status value
  */
-extern "C" RocalStatus ROCAL_API_CALL rocalUpdateFloatRand(RocalContext p_context, const float *values, const double *frequencies, unsigned size, RocalFloatParam updating_obj);
+extern "C" RocalStatus ROCAL_API_CALL rocalUpdateFloatRand(const float *values, const double *frequencies, unsigned size, RocalFloatParam updating_obj);
 
 #endif  // MIVISIONX_ROCAL_API_PARAMETERS_H

@@ -28,14 +28,13 @@ THE SOFTWARE.
 #include "rocal_api.h"
 
 RocalTensor ROCAL_API_CALL
-rocalExternalSource(
-        RocalContext p_context,
-        RocalTensor p_input,
-        const char* file_path,
-        const char* source,
-        int dtype,
-        int size,
-        bool is_output)
+rocalExternalSource(RocalContext p_context,
+                    RocalTensor p_input,
+                    const char* file_path,
+                    const char* source,
+                    int dtype,
+                    int size,
+                    bool is_output)
 {
     Tensor* output = nullptr;
     if ((p_context == nullptr)) {
@@ -45,24 +44,24 @@ rocalExternalSource(
 
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Tensor*>(p_input);
-    RocalTensorDataType op_tensor_datatype = static_cast<RocalTensorDataType>(dtype);
-
-    TensorInfo output_info, input_info;
-    std::vector<size_t> new_dims = {context->user_batch_size(),1};
-
-    auto info = TensorInfo(std::move(new_dims),
-                           context->master_graph->mem_type(),
-                           op_tensor_datatype,// Change according to user passed dtype
-                           RocalTensorlayout::NONE,
-                           RocalColorFormat::U8); // Dummy Format
-    info.set_external_source();
-    std::cerr << "\n In ESO - check if its set or not - " << info.is_external_source();
-    output = context->master_graph->create_tensor(info, is_output);
-    std::cerr << "\n In ESO - check if its set or not - " << const_cast<TensorInfo&>(output->info()).is_external_source();
-    context->master_graph->add_node<ExternalSourceNode>({input}, {output})->init(source, file_path, dtype);
+    try {
+        RocalTensorDataType op_tensor_datatype = static_cast<RocalTensorDataType>(dtype);
+        TensorInfo output_info, input_info;
+        std::vector<size_t> new_dims = {context->user_batch_size(),1};
+        auto info = TensorInfo(std::move(new_dims),
+                            context->master_graph->mem_type(),
+                            op_tensor_datatype,
+                            RocalTensorlayout::NONE,
+                            RocalColorFormat::U8);
+        info.set_external_source();
+        output = context->master_graph->create_tensor(info, is_output);
+        context->master_graph->add_node<ExternalSourceNode>({input}, {output})->init(source, file_path, dtype);
+    } catch (const std::exception& e) {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
     return output;
 }
-
 
 RocalTensor ROCAL_API_CALL
 rocalSequenceRearrange(RocalContext p_context,
