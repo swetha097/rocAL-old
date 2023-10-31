@@ -670,8 +670,8 @@ rocalBrightness(
     RocalContext p_context,
     RocalTensor p_input,
     bool is_output,
-    RocalFloatParam p_alpha,
-    RocalFloatParam p_beta,
+    RocalTensor p_alpha,
+    RocalTensor p_beta,
     RocalTensorLayout output_layout,
     RocalTensorOutputType output_datatype) {
     Tensor* output = nullptr;
@@ -682,8 +682,8 @@ rocalBrightness(
 
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Tensor*>(p_input);
-    auto alpha = static_cast<FloatParam*>(p_alpha);
-    auto beta = static_cast<FloatParam*>(p_beta);
+    auto alpha = static_cast<Tensor*>(p_alpha);
+    auto beta = static_cast<Tensor*>(p_beta);
     try {
         RocalTensorlayout op_tensor_layout = static_cast<RocalTensorlayout>(output_layout);
         RocalTensorDataType op_tensor_datatype = static_cast<RocalTensorDataType>(output_datatype);
