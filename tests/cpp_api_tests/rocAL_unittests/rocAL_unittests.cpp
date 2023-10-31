@@ -659,7 +659,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             std::cout << ">>>>>>> Running "
                       << "rocalExternalSource" << std::endl;
             Py_Initialize();
-            external_source_output = rocalExternalSource(handle, input, "/media/EOS_PR/rocAL/tests/cpp_api_tests/rocAL_unittests/external_source.py", "generate_random_numbers1", 5, 5, false);
+            external_source_output = rocalExternalSource(handle, input, "/media/EOS_PR/rocAL/tests/cpp_api_tests/rocAL_unittests/external_source.py", "generate_random_numbers1", RocalTensorOutputType::ROCAL_INT, inputBatchSize, false);
             output = rocalBlur(handle, input, true, external_source_output);
         } break;
         default:

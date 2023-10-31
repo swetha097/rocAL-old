@@ -32,7 +32,7 @@ rocalExternalSource(RocalContext p_context,
                     RocalTensor p_input,
                     const char* file_path,
                     const char* source,
-                    int dtype,
+                    RocalTensorOutputType dtype,
                     int size,
                     bool is_output)
 {
