@@ -53,9 +53,9 @@ rocalCreateIntUniformRand(
     int start,
     int end) {
     Tensor* output_tensor = nullptr;
+    auto context = static_cast<Context*>(p_context);
     try {
         std::vector<size_t> new_dims;
-        auto context = static_cast<Context*>(p_context);
         new_dims = { context->user_batch_size(), 1 };
         auto output_info = TensorInfo(std::move(new_dims),
                            context->master_graph->mem_type(),
@@ -137,15 +137,15 @@ rocalCreateFloatRand(
         context->capture_error(e.what());
         ERR(e.what())
     }
-        return output_tensor;
+    return output_tensor;
 }
 
 RocalTensor ROCAL_API_CALL
 rocalCreateFloatParameter(RocalContext p_context, float val) {
+    Tensor* output_tensor = nullptr;
     auto context = static_cast<Context*>(p_context);
     try {
         std::vector<size_t> new_dims;
-        Tensor* output_tensor = nullptr;
         new_dims = { context->user_batch_size(), 1 };
         auto output_info = TensorInfo(std::move(new_dims),
                            context->master_graph->mem_type(),
