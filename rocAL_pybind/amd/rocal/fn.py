@@ -33,6 +33,9 @@ import amd.rocal.types as types
 import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
+import inspect
+import os
+
 
 def blend(*inputs, ratio=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8):
     """!Blends two input images given the ratio: output = input1*ratio + input2*(1-ratio)
@@ -1056,8 +1059,11 @@ def box_iou_matcher(*inputs, anchors, criteria=0.5, high_threshold=0.5,
     Pipeline._current_pipeline._box_iou_matcher = True
     return (box_iou_matcher, [])
 
-def external_source(*inputs, file_path=" ", source=" ", dtype = None, size=0):
-    kwargs_pybind = {"input_image": inputs[0], "file_path": file_path, "source":source, "dtype":dtype, "size":size, "is_output":False}
+def external_source(*inputs, source=None, dtype = None, size=0):
+    source_file = inspect.getfile(source)
+    file_path = os.path.abspath(source_file)
+    source_func = source.__name__
+    kwargs_pybind = {"input_image": inputs[0], "file_path": file_path, "source":source_func, "dtype":dtype, "size":size, "is_output":False}
     output = b.ExternalSource(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     Pipeline._current_pipeline._external_source_operator = True
     return (output)

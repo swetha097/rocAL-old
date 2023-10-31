@@ -2,10 +2,7 @@
 from amd.rocal.plugin.generic import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
-import amd.rocal.types as types
-from parse_config import parse_args
-import os
-import sys
+import amd.rocal.types as types 
 import cv2
 import cupy as cp
 import random
@@ -55,10 +52,7 @@ def main():
     color_format = types.RGB
     data_path="/media/MIVisionX-data/rocal_data/coco/coco_10_img/train_10images_2017/"
     decoder_device = 'cpu'
-    # Execute the pythonScript containing read_array_from_file definition
-    data_type = types.FLOAT
-    file_path = os.path.abspath(__file__)
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=device_id, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC , tensor_dtype=types.INT, output_memory_type=types.HOST_MEMORY if rocal_cpu else types.DEVICE_MEMORY)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=device_id, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC , tensor_dtype=types.FLOAT, output_memory_type=types.HOST_MEMORY if rocal_cpu else types.DEVICE_MEMORY)
     with pipe:
         jpegs, _ = fn.readers.file(file_root=data_path)
         images = fn.decoders.image(jpegs,
@@ -70,15 +64,14 @@ def main():
                                     shard_id=local_rank,
                                     num_shards=world_size,
                                     random_shuffle=False)
-        output = fn.external_source(images, file_path = file_path, source = "generate_random_numbers", dtype=types.INT, size=batch_size)
-        output1 = fn.external_source(images, file_path = file_path, source = "generate_random_numbers1", dtype=types.INT, size=batch_size)
-        # contrast_output = fn.contrast(images, contrast_center=output, contrast = output1)
-        blur_output = fn.blur(images, window_size=output1)
-        # # brightness = fn.brightness(images)
+        output = fn.external_source(images, source = generate_random_numbers, dtype=types.FLOAT, size=batch_size)
+        output1 = fn.external_source(images, source = generate_random_numbers1, dtype=types.FLOAT, size=batch_size)
+        contrast_output = fn.contrast(images, contrast_center=output, contrast = output1)
+        # blur_output = fn.blur(images, window_size=output1)
 
-        pipe.set_outputs(blur_output)
+        pipe.set_outputs(contrast_output)
     pipe.build()
-    
+
     # Dataloader
     data_loader = ROCALClassificationIterator(
         pipe, device="cpu", device_id=local_rank)
