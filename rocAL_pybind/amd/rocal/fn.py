@@ -1060,9 +1060,27 @@ def box_iou_matcher(*inputs, anchors, criteria=0.5, high_threshold=0.5,
     return (box_iou_matcher, [])
 
 def external_source(*inputs, source=None, dtype = None, size=0):
+    # Get the source file path and function name
     source_file = inspect.getfile(source)
     file_path = os.path.abspath(source_file)
     source_func = source.__name__
+
+    # Call the source function with the given size
+    result = source(size)
+
+    if dtype is None:
+        # get the data type of the first element in the result
+        dtype = type(result[0]).__name__
+
+        # Map Python data types to corresponding rocal_pybind types
+        if dtype == "int":
+            dtype = types.INT
+        elif dtype == "float":
+            dtype = types.FLOAT
+        else:
+            print("Error: Unknown data type")
+            exit()
+
     kwargs_pybind = {"input_image": inputs[0], "file_path": file_path, "source":source_func, "dtype":dtype, "size":size, "is_output":False}
     output = b.ExternalSource(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     Pipeline._current_pipeline._external_source_operator = True
