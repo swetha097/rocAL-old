@@ -34,7 +34,9 @@ import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
 import inspect
+import marshal
 import os
+import pickle
 
 
 def blend(*inputs, ratio=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8):
@@ -1059,15 +1061,28 @@ def box_iou_matcher(*inputs, anchors, criteria=0.5, high_threshold=0.5,
     Pipeline._current_pipeline._box_iou_matcher = True
     return (box_iou_matcher, [])
 
-def external_source(*inputs, source=None, dtype = None, size=0):
-    # Get the source file path and function name
-    source_file = inspect.getfile(source)
-    file_path = os.path.abspath(source_file)
-    source_func = source.__name__
+import amd.rocal.reducers as r
 
+def external_source(*inputs, source=None, dtype = None, size=0):
+    # source_file = inspect.getfile(source)
+    # file_path = os.path.abspath(source_file)
+    result_tuple = r.function_by_value_reducer(source)
+    import dill
+    serialized_result = dill.dumps(result_tuple)
+    with open('serialized_data.bin', 'wb') as file:
+        file.write(serialized_result)
+    current_directory = os.getcwd()
+
+# Create the full path for the serialized data file
+    file_path = os.path.join(current_directory, 'serialized_data.bin')
+    # jpy_path = find_source_file(source)
+    source_func = source.__name__
+    # file_path = jpy_path
+    # print(inspect.getsource(source))
     # Call the source function with the given size
     result = source(size)
-
+    # file_path = inspect.getsource(source)
+    # file_path = serialized_result
     if dtype is None:
         # get the data type of the first element in the result
         dtype = type(result[0]).__name__
@@ -1080,6 +1095,8 @@ def external_source(*inputs, source=None, dtype = None, size=0):
         else:
             print("Error: Unknown data type")
             exit()
+
+    # print("IN fin.py", file_path, source_file, dtype)
 
     kwargs_pybind = {"input_image": inputs[0], "file_path": file_path, "source":source_func, "dtype":dtype, "size":size, "is_output":False}
     output = b.ExternalSource(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))

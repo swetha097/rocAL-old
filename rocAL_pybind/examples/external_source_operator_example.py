@@ -7,6 +7,7 @@ import cv2
 import cupy as cp
 import random
 import numpy as np
+import test as t
 
 def generate_random_numbers(count):
     """Generate a list of random floating-point numbers."""
@@ -16,10 +17,11 @@ def generate_random_numbers(count):
     return random_numbers
 
 def generate_random_numbers1(count):
+    import random
     """Generate a list of random numbers."""
     random_numbers = []
     for _ in range(count):
-        random_numbers.append(9)  # Generates random integers between 1 and 100 (inclusive)
+        random_numbers.append(random.randint(1, 100))  # Generates random integers between 1 and 100 (inclusive)
     return random_numbers
 
 def draw_patches(img, idx, device):
@@ -65,7 +67,9 @@ def main():
                                     num_shards=world_size,
                                     random_shuffle=False)
         output = fn.external_source(images, source = generate_random_numbers, size=batch_size)
-        output1 = fn.external_source(images, source = generate_random_numbers1, size=batch_size)
+        # output1 = fn.external_source(images, source = generate_random_numbers, size=batch_size)
+        # output = t.external_source(images, source = generate_random_numbers, size=batch_size)
+        # exit(0)
         contrast_output = fn.contrast(images, contrast_center=output, contrast = output)
         # blur_output = fn.blur(images, window_size=output1)
 
