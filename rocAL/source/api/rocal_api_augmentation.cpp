@@ -31,7 +31,6 @@ RocalTensor ROCAL_API_CALL
 rocalExternalSource(RocalContext p_context,
                     RocalTensor p_input,
                     const char* file_path,
-                    const char* source,
                     RocalTensorOutputType dtype,
                     int size,
                     bool is_output)
@@ -55,7 +54,7 @@ rocalExternalSource(RocalContext p_context,
                             RocalColorFormat::U8);
         info.set_external_source();
         output = context->master_graph->create_tensor(info, is_output);
-        context->master_graph->add_node<ExternalSourceNode>({input}, {output})->init(source, file_path, dtype);
+        context->master_graph->add_node<ExternalSourceNode>({input}, {output})->init(file_path, dtype);
     } catch (const std::exception& e) {
         context->capture_error(e.what());
         ERR(e.what())

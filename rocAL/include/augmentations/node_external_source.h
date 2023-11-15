@@ -31,14 +31,13 @@ class ExternalSourceNode : public Node {
     ExternalSourceNode(const std::vector<Tensor*>& inputs, const std::vector<Tensor*>& outputs);
     ExternalSourceNode() = delete;
 
-    void init(const char* source, const char* file_path, int dtype);
+    void init(const char* file_path, int dtype);
 
    protected:
     void create_node() override;
     void update_node() override;
 
    private:
-    char* _source;
     char* _file_path;
     int _dtype;
 };

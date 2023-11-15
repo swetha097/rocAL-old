@@ -1,40 +1,36 @@
 import inspect
 import marshal
-import os
-import pickle
 import types
 
-def set_funcion_state(fun, state):
-    fun.__globals__.update(state['global_refs'])
-    fun.__defaults__ = state['defaults']
-    fun.__kwdefaults__ = state['kwdefaults']
+def update_function_state(func, state):
+    func.__globals__.update(state['function_globals'])
+    func.__defaults__ = state['defaults']
+    func.__kwdefaults__ = state['kwdefaults']
 
-
-def function_unpickle(name, qualname, code, closure):
-    code = marshal.loads(code)
+def deserialize_function(name, qualname, func_code, closure):
+    func_code = marshal.loads(func_code)
     global_scope = {'__builtins__': __builtins__}
-    fun = types.FunctionType(code, global_scope, name, closure=closure)
-    fun.__qualname__ = qualname
-    return fun
+    deserialized_func = types.FunctionType(func_code, global_scope, name, closure=closure)
+    deserialized_func.__qualname__ = qualname
+    return deserialized_func
 
-def get_global_references_from_nested_code(code, global_scope, global_refs):
-    for constant in code.co_consts:
+def get_global_references(func_code, global_scope, function_globals):
+    for constant in func_code.co_consts:
         if inspect.iscode(constant):
             closure = tuple(types.CellType(None) for _ in range(len(constant.co_freevars)))
-            dummy_function = types.FunctionType(constant, global_scope, 'dummy_function',
-                                                closure=closure)
-            global_refs.update(inspect.getclosurevars(dummy_function).globals)
-            get_global_references_from_nested_code(constant, global_scope, global_refs)
+            nested_func = types.FunctionType(constant, global_scope, 'nested_func', closure=closure)
+            function_globals.update(inspect.getclosurevars(nested_func).globals)
+            get_global_references(constant, global_scope, function_globals)
 
-def function_by_value_reducer(fun):
-    cl_vars = inspect.getclosurevars(fun)
-    code = marshal.dumps(fun.__code__)
-    basic_def = (fun.__name__, fun.__qualname__, code, fun.__closure__)
-    global_refs = dict(cl_vars.globals)
-    get_global_references_from_nested_code(fun.__code__, fun.__globals__, global_refs)
-    fun_context = {
-        'global_refs': global_refs,
-        'defaults': fun.__defaults__,
-        'kwdefaults': fun.__kwdefaults__
+def serialize_function_data(func):
+    closure_vars = inspect.getclosurevars(func)
+    func_code = marshal.dumps(func.__code__)
+    function_globals = dict(closure_vars.globals)
+    function_definition = (func.__name__, func.__qualname__, func_code, func.__closure__)
+    get_global_references(func.__code__, func.__globals__, function_globals)
+    function_context = {
+        'function_globals': function_globals,
+        'defaults': func.__defaults__,
+        'kwdefaults': func.__kwdefaults__
     }
-    return function_unpickle, basic_def, fun_context, None, None, set_funcion_state
+    return deserialize_function, function_definition, function_context, update_function_state
