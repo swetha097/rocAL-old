@@ -1098,4 +1098,17 @@ extern "C" RocalTensor ROCAL_API_CALL rocalSSDRandomCrop(RocalContext context, R
                                                          RocalTensorLayout output_layout = ROCAL_NONE,
                                                          RocalTensorOutputType output_datatype = ROCAL_UINT8);
 
+/*!
+ * \brief Extracts the frames from the sequences with respect to element_map. element map can have values in the range [0, sequence_length).
+ * \ingroup group_rocal_augmentations
+ * \note Accepts U8 and RGB24 input.
+ * \param [in] p_context context for the pipeline.
+ * \param [in] p_input Input Rocal Tensor
+ * \param [in] element_map contains list of elements/frame number to be extracted from the input sequence
+ * \param [in] is_output True: the output image is needed by user and will be copied to output buffers using the data transfer API calls. False: the output image is just an intermediate image, user is not interested in using it directly. This option allows certain optimizations to be achieved.
+ * \return RocalTensor
+ */
+extern "C" RocalTensor ROCAL_API_CALL rocalElementExtract(RocalContext p_context, RocalTensor p_input,
+                                                          std::vector<unsigned int> &element_map,
+                                                          bool is_output);
 #endif  // MIVISIONX_ROCAL_API_AUGMENTATION_H

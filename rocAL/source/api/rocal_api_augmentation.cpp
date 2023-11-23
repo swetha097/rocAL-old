@@ -59,6 +59,54 @@ rocalSequenceRearrange(RocalContext p_context,
 }
 
 RocalTensor ROCAL_API_CALL
+rocalElementExtract(RocalContext p_context,
+                    RocalTensor p_input,
+                    std::vector<unsigned int>& element_map,
+                    bool is_output) {
+    Tensor* output = nullptr;
+    auto input = static_cast<Tensor*>(p_input);
+    if ((p_context == nullptr) || (input == nullptr)) {
+        ERR("Invalid ROCAL context or invalid input image")
+        return output;
+    }
+    auto context = static_cast<Context*>(p_context);
+    try {
+        TensorInfo output_info = input->info();
+        auto sequence_length = output_info.dims()[1];
+        // Validate all elements in element map
+        for (auto element : element_map) {
+            if (element >= sequence_length)
+                THROW("Invalid element in the element map, All elements must be in the range (0, sequence_length]")
+        }
+
+        std::vector<size_t> new_dims;
+        new_dims = output_info.dims();
+        new_dims[1] = element_map.size();
+        output_info.set_dims(new_dims);
+
+        // std::vector<size_t> dims(input_info.end() - 3, input_info.end());
+        // dims.insert(dims.begin(), input_info.dims()[0] * element_map.size());
+
+        // RocalTensorlayout tensor_layout;
+        // if (input_info.layout() == RocalTensorlayout::NFHWC) {
+        //     tensor_layout = RocalTensorlayout::NHWC;
+        // } else if (input_info.layout() == RocalTensorlayout::NFCHW) {
+        //     tensor_layout = RocalTensorlayout::NCHW;
+        // } else {
+        //     THROW("Invalid input layout")
+        // }
+
+        output = context->master_graph->create_tensor(output_info, is_output);
+        std::shared_ptr<ElementExtractNode> element_extract_node = context->master_graph->add_node<ElementExtractNode>({input}, {output});
+        element_extract_node->init(element_map);
+    } catch (const std::exception& e) {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RocalTensor ROCAL_API_CALL
 rocalRotate(
     RocalContext p_context,
     RocalTensor p_input,
