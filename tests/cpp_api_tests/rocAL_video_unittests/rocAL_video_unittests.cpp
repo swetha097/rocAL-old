@@ -67,7 +67,7 @@ int main(int argc, const char **argv) {
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT) {
-        printf("Usage: rocal_video_unittests <video_file/video_dataset_folder/text file> <reader_case> <processing_device=1/cpu=0> <hardware_decode_mode=0/1> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <resize_width> <resize_height> <filelist_framenum:0/1> <enable_meta_data:0/1> <enable_framenumber:0/1> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
+        printf("Usage: rocal_video_unittests <video_file/video_dataset_folder/text file> <reader_case> <processing_device=1/cpu=0> <hardware_decode_mode=0/1> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <resize_width> <resize_height> <filelist_framenum:0/1> <enable_meta_data:0/1> <enable_framenumber:0/1> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1> <pad_sequences:0/1> <normalize:0/1> <enable_element_extract:0/1>\n");
         return -1;
     }
 
@@ -95,6 +95,8 @@ int main(int argc, const char **argv) {
     unsigned hardware_decode_mode = 0;
     bool pad_sequences = false;
     bool normalize = false;
+    bool enable_element_extract = false;
+
     if (argc >= argIdx + MIN_ARG_COUNT)
         reader_case = atoi(argv[++argIdx]);
     if (argc >= argIdx + MIN_ARG_COUNT)
@@ -133,13 +135,15 @@ int main(int argc, const char **argv) {
         pad_sequences = atoi(argv[++argIdx]) ? true : false;
     if (argc >= argIdx + MIN_ARG_COUNT)
         normalize = atoi(argv[++argIdx]) ? true : false;
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        enable_element_extract = atoi(argv[++argIdx]) ? true : false;
 
     auto decoder_mode = ((hardware_decode_mode == 1) ? RocalDecodeDevice::ROCAL_HW_DECODE : RocalDecodeDevice::ROCAL_SW_DECODE);
     if (!IsPathExist(source_path)) {
         std::cout << "\nThe folder/file path does not exist\n";
         return -1;
     }
-    if (enable_sequence_rearrange) {
+    if (enable_sequence_rearrange || enable_element_extract) {
         is_output = false;
     }
     std::cerr << "Batch size : " << input_batch_size << std::endl;
@@ -204,6 +208,12 @@ int main(int argc, const char **argv) {
         std::vector<unsigned> new_order = {0, 0, 1, 1, 0};  // The integers in new order should range only from 0 to sequence_length - 1
         ouput_frames_per_sequence = new_order.size();
         input1 = rocalSequenceRearrange(handle, input1, new_order, true);
+    }
+    if (enable_element_extract) {
+        std::cout << "\n>>>> ENABLE ELEMENT EXTRACT\n";
+        std::vector<unsigned> new_order = {1, 0};  // The integers in new order should range only from 0 to sequence_length - 1
+        ouput_frames_per_sequence = new_order.size();
+        input1 = rocalElementExtract(handle, input1, new_order, true);
     }
     RocalIntParam color_temp_adj = rocalCreateIntParameter(0);
 
