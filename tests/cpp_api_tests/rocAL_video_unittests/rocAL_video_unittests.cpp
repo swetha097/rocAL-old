@@ -211,8 +211,8 @@ int main(int argc, const char **argv) {
     }
     if (enable_element_extract) {
         std::cout << "\n>>>> ENABLE ELEMENT EXTRACT\n";
-        std::vector<unsigned> new_order = {1, 0};  // The integers in new order should range only from 0 to sequence_length - 1
-        ouput_frames_per_sequence = new_order.size();
+        unsigned new_order = 1;  // The integer should range only from 0 to sequence_length - 1
+        ouput_frames_per_sequence = 1; // Since only 1 frame is the output (the element that the user requests for)
         input1 = rocalElementExtract(handle, input1, new_order, true);
     }
     RocalIntParam color_temp_adj = rocalCreateIntParameter(0);
