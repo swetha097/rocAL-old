@@ -1109,6 +1109,6 @@ extern "C" RocalTensor ROCAL_API_CALL rocalSSDRandomCrop(RocalContext context, R
  * \return RocalTensor
  */
 extern "C" RocalTensor ROCAL_API_CALL rocalElementExtract(RocalContext p_context, RocalTensor p_input,
-                                                          std::vector<unsigned int> &element_map,
+                                                          unsigned int element_map,
                                                           bool is_output);
 #endif  // MIVISIONX_ROCAL_API_AUGMENTATION_H

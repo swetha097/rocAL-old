@@ -28,12 +28,12 @@ class ElementExtractNode : public Node {
    public:
     ElementExtractNode(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs);
     ElementExtractNode() = delete;
-    void init(std::vector<unsigned int> &new_order);
+    void init(unsigned int new_order);
 
    protected:
     void create_node() override;
     void update_node() override;
 
    private:
-    std::vector<unsigned int> _element_map;
+    unsigned int _element;
 };

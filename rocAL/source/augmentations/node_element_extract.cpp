@@ -34,23 +34,24 @@ void ElementExtractNode::create_node() {
         return;
 
     vx_status status;
-    vx_array element_map_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _element_map.size());
-    status = vxAddArrayItems(element_map_array, _element_map.size(), _element_map.data(), sizeof(vx_uint32));
-    if (status != VX_SUCCESS)
-        THROW("Adding array items failed: " + TOSTR(status));
+    // vx_array element_map_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _element_map.size());
+    // status = vxAddArrayItems(element_map_array, _element_map.size(), _element_map.data(), sizeof(vx_uint32));
+    // if (status != VX_SUCCESS)
+        // THROW("Adding array items failed: " + TOSTR(status));
     int input_layout = static_cast<int>(_inputs[0]->info().layout());
     int output_layout = static_cast<int>(_outputs[0]->info().layout());
     vx_scalar input_layout_vx = vxCreateScalar(vxGetContext((vx_reference)_graph->get()), VX_TYPE_INT32, &input_layout);
     vx_scalar output_layout_vx = vxCreateScalar(vxGetContext((vx_reference)_graph->get()), VX_TYPE_INT32, &output_layout);
+    vx_scalar element_vx = vxCreateScalar(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, &_element);
 
-    _node = vxExtRppElementExtract(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), element_map_array, input_layout_vx, output_layout_vx);
+    _node = vxExtRppElementExtract(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), element_vx, input_layout_vx, output_layout_vx);
 
     if ((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the sequence rearrange (vxExtRppSequenceRearrange) node failed: " + TOSTR(status))
 }
 
-void ElementExtractNode::init(std::vector<unsigned int> &element_map) {
-    _element_map = element_map;
+void ElementExtractNode::init(unsigned int element) {
+    _element = element;
 }
 
 void ElementExtractNode::update_node() {}

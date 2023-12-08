@@ -188,7 +188,7 @@ def caffe2(path, bbox=False, stick_to_shard=False, pad_last_batch=False):
 def video(sequence_length, file_list_frame_num=False, file_root="", image_type=types.RGB, num_shards=1,
           random_shuffle=False, step=1, stride=1, decoder_mode=types.SOFTWARE_DECODE, enable_frame_num=False,
           enable_timestamps=False, file_list="", stick_to_shard=False, pad_last_batch=False,
-          file_list_include_preceding_frame=False, normalized=False, skip_vfr_check=False):
+          file_list_include_preceding_frame=False, normalized=False, skip_vfr_check=False, pad_sequences=False):
     """!Creates a VideoDecoder node for loading video sequences.
 
         @param sequence_length                      Number of frames in video sequence.
@@ -208,6 +208,7 @@ def video(sequence_length, file_list_frame_num=False, file_root="", image_type=t
         @param file_list_include_preceding_frame    Changes the behavior how file_list start and end frame timestamps are translated to a frame number.
         @param normalized                           Gets the output as normalized data.
         @param skip_vfr_check                       Skips the check for the variable frame rate (VFR) videos.
+        @param pad_sequences                        Pads the Sequence or not
 
         @return   list of loaded video sequences.
     """
@@ -234,7 +235,9 @@ def video(sequence_length, file_list_frame_num=False, file_root="", image_type=t
         "loop": False,
         "frame_step": step,
         "frame_stride": stride,
-        "file_list_frame_num": file_list_frame_num}  # VideoDecoder
+        "file_list_frame_num": file_list_frame_num,
+        "pad_sequences": pad_sequences,
+        "normalized": normalized}  # VideoDecoder
     videos = b.videoDecoder(
         Pipeline._current_pipeline._handle, *(kwargs_pybind_decoder.values()))
     return (videos)

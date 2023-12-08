@@ -1055,3 +1055,21 @@ def box_iou_matcher(*inputs, anchors, criteria=0.5, high_threshold=0.5,
         Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     Pipeline._current_pipeline._box_iou_matcher = True
     return (box_iou_matcher, [])
+
+def element_extract(*inputs, element_map = None):
+    """!Copies input tensor to output tensor.
+
+        @param inputs                                     the input image passed to the augmentation
+        @param (int or list of int)                       Indices of the elements to extract
+        For example, for element_map = [2, 0, 3] there will be three outputs, containing 2nd, 0th and 3rd element of the input sequences respectively.
+
+        @return    Extracted Frames
+    """
+    # pybind call arguments
+    elements_extracted = []
+    for i in range(len(element_map)):
+        kwargs_pybind = {"input_image": inputs[0], "element_map" : element_map[i], "is_output": False}
+        extracted_element = b.elementExtract(
+        Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
+        elements_extracted.append(extracted_element)
+    return elements_extracted

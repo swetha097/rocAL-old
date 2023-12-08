@@ -54,7 +54,7 @@ ENABLE_FRAME_NUMBER=0        # outputs the starting frame numbers of the sequenc
 ENABLE_TIMESTAMPS=0          # outputs timestamps of the frames in the batch
 ENABLE_SEQUENCE_REARRANGE=0  # rearranges the frames in the sequence NOTE: The order needs to be set in the rocAL_video_unittests.cpp
 PAD_SEQUENCES=0              # allows incomplete sequences
-ENABLE_ELEMENT_EXTRACT=0     # enable element extract NOTE: The order needs to be set in the rocAL_video_unittests.cpp
+ENABLE_ELEMENT_EXTRACT=1     # enable element extract NOTE: The order needs to be set in the rocAL_video_unittests.cpp
 
 echo ./rocal_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $HARDWARE_DECODE_MODE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $SAVE_FRAMES $SHUFFLE $RESIZE_WIDTH $RESIZE_HEIGHT $FILELIST_FRAMENUM \
