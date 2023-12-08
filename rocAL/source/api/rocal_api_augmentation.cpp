@@ -74,15 +74,11 @@ rocalElementExtract(RocalContext p_context,
         TensorInfo input_info = input->info();
         auto sequence_length = input_info.dims()[1];
         // Validate all elements in element map
-        // for (auto element : element_map) { // No more a vector
             if (element_map >= sequence_length)
                 THROW("Invalid element in the element map, All elements must be in the range (0, sequence_length]")
-        // }
 
         std::vector<size_t> new_dims;
         new_dims = {input_info.dims()[0], input_info.dims()[2], input_info.dims()[3], input_info.dims()[4]};
-        // new_dims[1] = element_map.size(); // Output is now NHWC / NCHW (Only a single frame of the sequences)
-        // input_info.set_dims(new_dims);
 
         RocalTensorlayout tensor_layout;
         if (input_info.layout() == RocalTensorlayout::NFHWC) {
