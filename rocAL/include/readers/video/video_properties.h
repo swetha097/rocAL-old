@@ -51,6 +51,7 @@ typedef struct VideoProperties {
 
 typedef struct Properties {
     unsigned width, height, frames_count, avg_frame_rate_num, avg_frame_rate_den;
+    bool variable_frame_rates;
 } Properties;
 
 void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out);
