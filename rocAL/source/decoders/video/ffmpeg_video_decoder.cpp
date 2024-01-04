@@ -44,11 +44,11 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     VideoDecoder::Status status = Status::OK;
 
     // Initialize the SwsContext
-    SwsContext *swsctx = nullptr;
+    SwsContext *sws_ctx = nullptr;
     if ((out_width != _codec_width) || (out_height != _codec_height) || (out_pix_format != _dec_pix_fmt)) {
-        swsctx = sws_getCachedContext(nullptr, _codec_width, _codec_height, _dec_pix_fmt,
-                                      out_width, out_height, out_pix_format, SWS_BILINEAR, nullptr, nullptr, nullptr);
-        if (!swsctx) {
+        sws_ctx = sws_getCachedContext(nullptr, _codec_width, _codec_height, _dec_pix_fmt,
+                                      _codec_width, _codec_height, out_pix_format, SWS_BILINEAR, nullptr, nullptr, nullptr);
+        if (!sws_ctx) {
             ERR("Fail to get sws_getCachedContext");
             return Status::FAILED;
         }
@@ -62,7 +62,7 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     unsigned filled_frames_count = 0;
     bool end_of_stream = false;
     bool sequence_filled = false;
-    uint8_t *dst_data[4] = {0};
+    uint8_t *temp_dst_data[4] = {0};
     int dst_linesize[4] = {0};
     int image_size = out_height * out_stride * sizeof(unsigned char);
     AVPacket pkt;
@@ -102,13 +102,25 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
             if ((dec_frame->pts < select_frame_pts) || (ret < 0)) continue;
             if (frame_count % stride == 0) {
-                dst_data[0] = out_buffer;
                 dst_linesize[0] = out_stride;
-                if (swsctx)
-                    sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
-                else {
-                    // copy from frame to out_buffer
-                    memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0] * out_height);
+                if (sws_ctx) {
+                    AVFrame* rgb_frame = av_frame_alloc();
+                    if (!rgb_frame)
+                        ERR("The Frame Allocation failed")
+                    // Set the parameters for the RGB frame
+                    rgb_frame->format = AV_PIX_FMT_RGB24;
+                    rgb_frame->width = _codec_width;
+                    rgb_frame->height = _codec_height;
+                    int ret = av_frame_get_buffer(rgb_frame, 1); // Adjust the alignment as needed
+                    if (ret < 0)
+                        ERR("The Buffer Allocation for RGB failed")
+                    sws_scale(sws_ctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, rgb_frame->data, rgb_frame->linesize);
+                    for (int i = 0; i < dec_frame->height; i++) {
+                        temp_dst_data[0] = out_buffer + i * dst_linesize[0];
+                        auto temp_src_data = rgb_frame->data[0] + i * rgb_frame->linesize[0];
+                        memcpy(temp_dst_data[0], temp_src_data, rgb_frame->linesize[0] * sizeof(unsigned char));
+                    }
+                    av_frame_free(&rgb_frame);
                 }
                 out_buffer = out_buffer + image_size;
                 filled_frames_count += 1;
@@ -128,7 +140,7 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     }
     avcodec_flush_buffers(_video_dec_ctx);
     av_frame_free(&dec_frame);
-    sws_freeContext(swsctx);
+    sws_freeContext(sws_ctx);
     return status;
 }
 
