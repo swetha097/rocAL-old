@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <cmath>
 
 #ifdef ROCAL_VIDEO
+
 void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out) {
     size_t start;
     size_t end = 0;
@@ -32,6 +33,14 @@ void substring_extraction(std::string const &str, const char delim, std::vector<
         end = str.find(delim, start);
         out.push_back(str.substr(start, end - start));
     }
+}
+
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+    almost_equal(T x, T y, int ulp) {
+    if (x == y) return true;
+    return std::abs(x-y) <= std::numeric_limits<T>::epsilon() * std::abs(x+y) * ulp
+    || std::abs(x-y) < std::numeric_limits<T>::min();
 }
 
 // Opens the context of the Video file to obtain the width, heigh and frame rate info.
@@ -65,26 +74,28 @@ void open_video_context(const char *video_file_path, Properties &props) {
     // // Analyze frame rates
     double first_frame_rate = static_cast<double>(pFormatCtx->streams[videoStream]->avg_frame_rate.num) /
                               pFormatCtx->streams[videoStream]->avg_frame_rate.den;
-    AVPacket packet;
-    for (uint i = 1; i < pFormatCtx->streams[videoStream]->nb_frames; i++) {
-        double current_frame_rate = static_cast<double>(pFormatCtx->streams[videoStream]->avg_frame_rate.num) /
-                                  pFormatCtx->streams[videoStream]->avg_frame_rate.den;
-        if (current_frame_rate != first_frame_rate) {
-            // Video has variable frame rates
-            props.variable_frame_rates = true;
-            THROW("Variable frame rate videos cannot be processed")
-            break;
-        }
-        // Move to the next frame
-        ret = av_read_frame(pFormatCtx, &packet);
-        assert(ret >= 0);
+    AVPacket packet = AVPacket{};
+    auto vid_stream_idx = av_find_best_stream(pFormatCtx, AVMEDIA_TYPE_VIDEO,
+                                        -1, -1, nullptr, 0);
+    while ((ret = av_read_frame(pFormatCtx, &packet)) >= 0) {
+        std::cerr << "\n while loop";
+      if (packet.stream_index == vid_stream_idx) break;
+      av_packet_unref(&packet);
     }
-
+    if (ret < 0)
+      ERR("Unable to read frame from the file :");
+    auto stream_base = pFormatCtx->streams[videoStream]->time_base;
+    // 1/frame_rate is duration of each frame (or time base of frame_num)
+    auto frame_base = AVRational{pFormatCtx->streams[videoStream]->avg_frame_rate.den,
+                                 pFormatCtx->streams[videoStream]->avg_frame_rate.num};
+    if(!almost_equal(av_q2d(frame_base), packet.duration * av_q2d(stream_base), 2))
+        ERR("Variable frame rate videos are unsupported. This heuristic can yield false positives.")
     props.width = pCodecCtx->width;
     props.height = pCodecCtx->height;
     props.frames_count = pFormatCtx->streams[videoStream]->nb_frames;
     props.avg_frame_rate_num = pFormatCtx->streams[videoStream]->avg_frame_rate.num;
     props.avg_frame_rate_den = pFormatCtx->streams[videoStream]->avg_frame_rate.den;
+    av_packet_unref(&packet);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
 }
@@ -212,8 +223,6 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                 float video_frame_rate = std::floor(props.avg_frame_rate_num / props.avg_frame_rate_den);
                 std::cerr << "\n video_frame_rate" << video_frame_rate;
                 std::cerr << "\n video_props.frame_rate" << video_props.frame_rate;
-                // if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
-                //     THROW("Variable frame rate videos cannot be processed")
                 video_props.frame_rate = video_frame_rate;
                 video_file_path = std::to_string(video_count) + "#" + subfolder_path;  // Video index is added to each video file name to identify repeated videos files.
                 video_props.video_file_names.push_back(video_file_path);
