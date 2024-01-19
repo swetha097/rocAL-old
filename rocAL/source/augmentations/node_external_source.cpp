@@ -37,7 +37,7 @@ void ExternalSourceNode::create_node() {
     _node = vxExtExternalSource(_graph->get(), _inputs[0]->handle(), _inputs[0]->get_roi_tensor(), _outputs[0]->handle(), filePathArray, _dtype);
     vx_status status;
     if ((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the copy (vxCopyNode) node failed: " + TOSTR(status))
+        THROW("Adding the copy (vxExtExternalSource) node failed: " + TOSTR(status))
 }
 
 void ExternalSourceNode::init(const char* file_path, int dtype) {

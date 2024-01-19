@@ -60,7 +60,6 @@ class ParameterVX {
         update_array();
     }
     void create_tensor(std::shared_ptr<Graph> graph, TensorInfo info) {
-       std::cerr << "\n CREATE TENSOR with info";
         vx_enum tensor_data_type = interpret_tensor_data_type(info.data_type()); // TODO: Add this function for interpretation
         _tensor = vxCreateTensor(vxGetContext((vx_reference)graph->get()), info.num_of_dims(), info.dims().data(), tensor_data_type, 0);
 
@@ -68,22 +67,18 @@ class ParameterVX {
 
 
     void create_tensor(std::shared_ptr<Graph> graph, vx_enum data_type, unsigned batch_size) {
-        std::cerr << "Comes here - vxCreateTensorFromHandle";
-        std::cerr << "\n CREATE TENSOR with dtype and batch_size";
         vx_size dims[1] = { batch_size };
         _batch_size = batch_size;
         vx_size output_dims[1];
         size_t num_tensor_dims;
         _arrVal.resize(batch_size);
         vx_size stride_output[1] = {sizeof(_arrVal[0])};
-        std::cerr << "stride_output :: " << stride_output[0] << "\t sizeof(_arrVal) : " << sizeof(_arrVal) << "\n sizeof(_arrVal[0]) : " << sizeof(_arrVal[0]);
         _tensor = vxCreateTensorFromHandle(vxGetContext((vx_reference)graph->get()), 1, dims, data_type, 0, stride_output, _arrVal.data(), VX_MEMORY_TYPE_HOST);
         update_tensor();
     }
     void set_tensor(vx_tensor external_source_tensor) {
         _tensor = external_source_tensor;  
         if(_tensor == nullptr)
-            std::cerr << "\n Tensor is a null PTR"; 
     }
     
     void set_param(Parameter<T>* param) {
@@ -130,7 +125,6 @@ class ParameterVX {
         vx_status status;
         for (uint i = 0; i < _batch_size; i++) {
             _arrVal[i] = renew();
-            std::cerr << "\n _arrVal[i] : " << _arrVal[i];
             // INFO("update_array: " + TOSTR(i) + "," + TOSTR(_arrVal[i]));
         }
         status = vxCopyArrayRange((vx_array)_array, 0, _batch_size, sizeof(T), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
@@ -142,7 +136,6 @@ class ParameterVX {
         vx_status status;
         for (uint i = 0; i < _batch_size; i++) { 
             _arrVal[i] = renew();
-            std::cerr << "\n _arrVal[i] : " << _arrVal[i];
         }
         status = vxCopyTensorPatch((vx_tensor)_tensor, info.num_of_dims(), nullptr, nullptr, info.strides(), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
         if (status != VX_SUCCESS)
@@ -153,7 +146,6 @@ class ParameterVX {
         vx_status status;
         for (uint i = 0; i < _batch_size; i++) { 
             _arrVal[i] = renew();
-            std::cerr << "\n _arrVal[i] : " << _arrVal[i];
         }
         vx_size stride_output[1] = {sizeof(float)};
         vx_size output_dims[1];

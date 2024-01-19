@@ -34,7 +34,6 @@ import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.reducer as r
 import os
-import dill
 
 def blend(*inputs, ratio=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8):
     """!Blends two input images given the ratio: output = input1*ratio + input2*(1-ratio)
@@ -1059,15 +1058,11 @@ def box_iou_matcher(*inputs, anchors, criteria=0.5, high_threshold=0.5,
     return (box_iou_matcher, [])
 
 def external_source(*inputs, source=None, dtype = None, size=0):
-
-    result_tuple = r.serialize_function_data(source)
-    serialized_result = dill.dumps(result_tuple)
-    with open('serialized_data.bin', 'wb') as file:
-        file.write(serialized_result)
+    r.dump_python_source_print_outputs_to_console(source, size)
     current_directory = os.getcwd()
 
     # Create the full path for the serialized data file
-    file_path = os.path.join(current_directory, 'serialized_data.bin')
+    file_path = os.path.join(current_directory, 'temp_eso_script.py')
     # Call the source function with the given size
     result = source(size)
     if dtype is None:
