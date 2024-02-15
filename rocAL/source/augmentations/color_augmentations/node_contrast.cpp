@@ -35,13 +35,13 @@ void ContrastNode::create_node() {
     if(_tensor_factor && _tensor_factor->info().is_external_source()) {
         _factor.set_tensor(_tensor_factor->handle());
     } else {
-        _factor.create_tensor(_graph, VX_TYPE_FLOAT32, _batch_size);
+        _factor.create_tensor(_graph, VX_TYPE_FLOAT32, _tensor_factor->info().dims()[0]);
     }
 
     if(_tensor_center && _tensor_center->info().is_external_source()) {
         _center.set_tensor(_tensor_center->handle());
     } else {
-        _center.create_tensor(_graph, VX_TYPE_FLOAT32, _batch_size);
+        _center.create_tensor(_graph, VX_TYPE_FLOAT32, _tensor_center->info().dims()[0]);
     }
 
     int input_layout = static_cast<int>(_inputs[0]->info().layout());
@@ -65,6 +65,9 @@ void ContrastNode::init(float contrast_factor, float contrast_center) {
 void ContrastNode::init(Tensor *contrast_factor_tensor, Tensor *contrast_center_tensor) {
     _tensor_factor = contrast_factor_tensor;
     _tensor_center = contrast_center_tensor;
+    std::cerr << "The dimensions are :: " << _tensor_factor->info().dims()[0];
+    std::cerr << "The dimensions are :: " << _tensor_center->info().dims()[0];
+    // std::exit(0);
     if (_tensor_factor && _tensor_factor->info().is_external_source() == false) {
         _factor.set_param(core(std::get<FloatParam*>(contrast_factor_tensor->get_param())));
     }

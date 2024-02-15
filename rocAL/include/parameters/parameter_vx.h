@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include <VX/vx_types.h>
 
 #include <vector>
-#include "tensor.h"
+
 #include "parameter_factory.h"
 
 template <typename T>
@@ -52,30 +52,24 @@ class ParameterVX {
             THROW("Reading vx scalar failed" + TOSTR(status));
     }
     void create_array(std::shared_ptr<Graph> graph, vx_enum data_type, unsigned batch_size) {
-        // _arrVal = (T*)malloc(sizeof(T) * _batch_size);
         _batch_size = batch_size;
-        _arrVal.resize(_batch_size);
+        _param->create_array(_batch_size);
         _array = vxCreateArray(vxGetContext((vx_reference)graph->get()), data_type, _batch_size);
-        vxAddArrayItems(_array, _batch_size, _arrVal.data(), sizeof(T));
+        auto status = vxAddArrayItems(_array, _batch_size, get_array().data(), sizeof(T));
+        if (status != 0)
+            THROW(" vxAddArrayItems failed in create_array (ParameterVX): " + TOSTR(status))
         update_array();
     }
-    void create_tensor(std::shared_ptr<Graph> graph, TensorInfo info) {
-        vx_enum tensor_data_type = interpret_tensor_data_type(info.data_type()); // TODO: Add this function for interpretation
-        _tensor = vxCreateTensor(vxGetContext((vx_reference)graph->get()), info.num_of_dims(), info.dims().data(), tensor_data_type, 0);
-
-    }
-
 
     void create_tensor(std::shared_ptr<Graph> graph, vx_enum data_type, unsigned batch_size) {
         vx_size dims[1] = { batch_size };
         _batch_size = batch_size;
-        vx_size output_dims[1];
-        size_t num_tensor_dims;
-        _arrVal.resize(batch_size);
-        vx_size stride_output[1] = {sizeof(_arrVal[0])};
-        _tensor = vxCreateTensorFromHandle(vxGetContext((vx_reference)graph->get()), 1, dims, data_type, 0, stride_output, _arrVal.data(), VX_MEMORY_TYPE_HOST);
+        vx_size stride_output[1] = {sizeof(get_array()[0])};
+        _param->create_array(_batch_size);
+        _tensor = vxCreateTensorFromHandle(vxGetContext((vx_reference)graph->get()), 1, dims, data_type, 0, stride_output, get_array().data(), VX_MEMORY_TYPE_HOST);
         update_tensor();
     }
+
     void set_tensor(vx_tensor external_source_tensor) {
         _tensor = external_source_tensor;  
         if(_tensor == nullptr)
@@ -122,71 +116,56 @@ class ParameterVX {
         if ((status = vxWriteScalarValue(_scalar, &val)) != VX_SUCCESS)
             WRN("Updating vx scalar failed")
     }
+
     void update_array() {
         vx_status status;
-        for (uint i = 0; i < _batch_size; i++) {
-            _arrVal[i] = renew();
-            // INFO("update_array: " + TOSTR(i) + "," + TOSTR(_arrVal[i]));
-        }
-        status = vxCopyArrayRange((vx_array)_array, 0, _batch_size, sizeof(T), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        status = vxCopyArrayRange((vx_array)_array, 0, _batch_size, sizeof(T), get_array().data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
         if (status != 0)
             THROW(" vxCopyArrayRange failed in update_array (ParameterVX): " + TOSTR(status))
-    }
-    
-    void update_tensor(TensorInfo info) {
-        vx_status status;
-        for (uint i = 0; i < _batch_size; i++) { 
-            _arrVal[i] = renew();
-        }
-        status = vxCopyTensorPatch((vx_tensor)_tensor, info.num_of_dims(), nullptr, nullptr, info.strides(), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-        if (status != VX_SUCCESS)
-            THROW("ERROR: vxCopyTensorPatch: write failed" + TOSTR(status));
     }
 
     void update_tensor() {
         vx_status status;
-        for (uint i = 0; i < _batch_size; i++) { 
-            _arrVal[i] = renew();
-        }
-        vx_size stride_output[1] = {sizeof(float)};
-        vx_size output_dims[1];
+        std::cerr << "\n paramater_vx.h - update_tensor - get_array()[0]" << get_array()[0];
+        std::cerr << "\n sizeof(get_array()[0]) - " << sizeof(get_array()[0]);
+        vx_size stride_output[1] = {sizeof(get_array()[0])};
+        status = vxCopyTensorPatch((vx_tensor)_tensor, 1, nullptr, nullptr, stride_output, get_array().data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status != VX_SUCCESS)
+            THROW("ERROR: vxCopyArrayRange failed in update_tensor (ParameterVX)" + TOSTR(status));
     }
-    
-    //! Converts the Rocal data_type to OpenVX
-vx_enum interpret_tensor_data_type(RocalTensorDataType data_type) {
-    switch (data_type) {
-        case RocalTensorDataType::FP32:
-            return VX_TYPE_FLOAT32;
-        case RocalTensorDataType::FP16:
-            return VX_TYPE_FLOAT16;
-        case RocalTensorDataType::UINT8:
-            return VX_TYPE_UINT8;
-        case RocalTensorDataType::INT8:
-            return VX_TYPE_INT8;
-        case RocalTensorDataType::INT32:
-            return VX_TYPE_INT32;
-        case RocalTensorDataType::UINT32:
-            return VX_TYPE_UINT32;
-        default:
-            THROW("Unsupported Tensor type " + TOSTR(data_type))
-    }
-}
-    
+// Remove this function later
+    // void update_tensor() {
+    //     vx_status status;
+    //     // for (uint i = 0; i < _batch_size; i++) { 
+    //     //     _arrVal[i] = renew();
+    //     // }
+    //     vx_size stride_output[1] = {sizeof(float)};
+    //     vx_size output_dims[1];
+    // }
     T renew() {
         _param->renew();
         return _param->get();
     }
+
     ~ParameterVX() {
         if(_tensor)
             vxReleaseTensor((vx_tensor*)&_tensor);
     }
+
+    std::vector<T> get_array() {
+        return _param->get_array();
+    }
+
+    std::vector<T> get_tensor() {
+        return _param->get_tensor();
+    }
+
    private:
     vx_scalar _scalar;
-    vx_array _array;
+    vx_array _array = nullptr;
     vx_tensor _tensor = nullptr;
     Parameter<T>* _param;
     T _val;
-    std::vector<T> _arrVal;
     unsigned _batch_size;
     unsigned OVX_PARAM_IDX;
     const T _DEFAULT_RANGE_START;

@@ -88,11 +88,31 @@ rocalUpdateIntUniformRand(
     return (obj->update(start, end) == 0) ? ROCAL_OK : ROCAL_UPDATE_PARAMETER_FAILED;
 }
 
-RocalFloatParam ROCAL_API_CALL
-rocalCreateFloatUniformRand(
-    float start,
-    float end) {
-    return ParameterFactory::instance()->create_uniform_float_rand_param(start, end);
+RocalTensor ROCAL_API_CALL
+rocalCreateFloatUniformRand(RocalContext p_context,
+                            float start,
+                            float end,
+                            uint shape) {
+    Tensor* output_tensor = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try {
+        std::vector<size_t> new_dims;
+        std::cerr << "\n shape :: " << shape;
+        std::cerr << "\n context->user_batch_size() :: " << context->user_batch_size();
+        auto total_size = context->user_batch_size() * shape;
+        new_dims = {total_size, 1};
+        auto output_info = TensorInfo(std::move(new_dims),
+                                      context->master_graph->mem_type(),
+                                      RocalTensorDataType::FP32,
+                                      RocalTensorlayout::NONE,
+                                      RocalColorFormat::U8);
+        output_tensor = context->master_graph->create_tensor(output_info, false);
+        output_tensor->set_param(ParameterFactory::instance()->create_uniform_float_rand_param(start, end));
+    } catch (const std::exception& e) {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output_tensor;
 }
 
 RocalStatus ROCAL_API_CALL
@@ -141,12 +161,14 @@ rocalCreateFloatRand(
 }
 
 RocalTensor ROCAL_API_CALL
-rocalCreateFloatParameter(RocalContext p_context, float val) {
+rocalCreateFloatParameter(RocalContext p_context, float val, uint shape) {
     Tensor* output_tensor = nullptr;
     auto context = static_cast<Context*>(p_context);
     try {
         std::vector<size_t> new_dims;
-        new_dims = { context->user_batch_size(), 1 };
+        std::cerr << "\n shape :: " << shape;
+        std::cerr << "\n context->user_batch_size() :: " << context->user_batch_size();
+        new_dims = { context->user_batch_size() * shape, 1 };
         auto output_info = TensorInfo(std::move(new_dims),
                            context->master_graph->mem_type(),
                            RocalTensorDataType::FP32,

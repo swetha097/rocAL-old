@@ -81,14 +81,14 @@ extern "C" float ROCAL_API_CALL rocalGetFloatValue(RocalFloatParam obj);
  * \param end end value of the float range
  * \return RocalFloatParam representing the uniform random float parameter.
  */
-extern "C" RocalFloatParam ROCAL_API_CALL rocalCreateFloatUniformRand(float start, float end);
+extern "C" RocalTensor ROCAL_API_CALL rocalCreateFloatUniformRand(RocalContext p_context, float start, float end, uint shape = 1);
 
 /*! \brief Creates a new float parameter with a specified value.
  * \ingroup group_rocal_parameters
  * \param [in] val value to create float param
  * \return A new RocalFloatParam representing the float parameter.
  */
-extern "C" RocalTensor ROCAL_API_CALL rocalCreateFloatParameter(RocalContext p_context, float val);
+extern "C" RocalTensor ROCAL_API_CALL rocalCreateFloatParameter(RocalContext p_context, float val, uint shape = 1);
 
 /*! \brief Creates a new int parameter with a specified value.
  * \ingroup group_rocal_parameters

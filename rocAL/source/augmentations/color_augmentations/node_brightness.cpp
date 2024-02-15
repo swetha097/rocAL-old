@@ -35,13 +35,13 @@ void BrightnessNode::create_node() {
     if(_tensor_alpha && _tensor_alpha->info().is_external_source()) {
         _alpha.set_tensor(_tensor_alpha->handle());
     } else {
-        _alpha.create_tensor(_graph, VX_TYPE_FLOAT32, _batch_size);
+        _alpha.create_tensor(_graph, VX_TYPE_FLOAT32, _tensor_alpha->info().dims()[0]); 
     }
 
     if(_tensor_beta && _tensor_beta->info().is_external_source()) {
         _beta.set_tensor(_tensor_beta->handle());
     } else {
-        _beta.create_tensor(_graph, VX_TYPE_FLOAT32, _batch_size);
+        _beta.create_tensor(_graph, VX_TYPE_FLOAT32, _tensor_beta->info().dims()[0]);
     }
 
     int input_layout = static_cast<int>(_inputs[0]->info().layout());

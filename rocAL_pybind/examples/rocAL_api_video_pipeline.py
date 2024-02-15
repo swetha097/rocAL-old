@@ -57,7 +57,7 @@ class ROCALVideoIterator(object):
         self.iter_num = 0
         self.sequence_length = sequence_length
         print("____________REMAINING IMAGES____________:", self.rim)
-        self.output = self.dimensions = self.dtype = None
+        self.output_list = self.dimensions = self.dtype = None
 
     def next(self):
         return self.__next__()
@@ -71,19 +71,28 @@ class ROCALVideoIterator(object):
         self.output_tensor_list = self.loader.get_output_tensors()
         self.iter_num += 1
         # Copy output from buffer to numpy array
-        if self.output is None:
-            self.dimensions = self.output_tensor_list[0].dimensions()
-            self.dtype = self.output_tensor_list[0].dtype()
-            self.layout = self.output_tensor_list[0].layout()
-            self.output = np.empty(
-                (self.dimensions[0]*self.dimensions[1], self.dimensions[2], self.dimensions[3], self.dimensions[4]), dtype=self.dtype)
-        self.output_tensor_list[0].copy_data(self.output)
-        img = torch.from_numpy(self.output)
+        if self.output_list is None:  # Checking if output_list is empty and initializing the buffers
+            self.output_list = []
+            for i in range(len(self.output_tensor_list)):
+                self.dimensions = self.output_tensor_list[i].dimensions()
+                print(self.dimensions)
+                self.dtype = self.output_tensor_list[i].dtype()
+                if len(self.dimensions) == 5:
+                    first_dim = self.dimensions[0] * self.dimensions[1]
+                    self.output = np.empty((first_dim, self.dimensions[2], self.dimensions[3], self.dimensions[4]) , dtype=self.dtype)
+                else:
+                    self.output = np.empty((self.dimensions) , dtype=self.dtype)
+                self.output_tensor_list[i].copy_data(self.output)
+                self.output_list.append(self.output)
+        else:
+            for i in range(len(self.output_tensor_list)):
+                    self.output_tensor_list[i].copy_data(self.output_list[i])
+
         # Display Frames in a video sequence
-        if self.display:
-            for batch_i in range(self.batch_size):
-                draw_frames(img[batch_i], batch_i, self.iter_num, self.layout)
-        return img
+        for i in range(len(self.output_list)):
+            for list_i in range(len(self.output_list[i])):
+                    draw_frames(self.output_list[i][list_i], i, list_i, self.iter_num, self.tensor_format)
+        return self.output_list
 
     def reset(self):
         self.loader.rocal_reset_loaders()
@@ -95,65 +104,67 @@ class ROCALVideoIterator(object):
         self.loader.rocal_release()
 
 
-def draw_frames(img, batch_idx, iter_idx, layout):
+def draw_frames(image, output_list_num, batch_sample_idx, iter_idx, layout):
     # image is expected as a tensor, bboxes as numpy
     import cv2
-    image = img.detach().numpy()
-    if layout == 'NFCHW':
+    if layout == (types.NFCHW or types.NCHW):
         image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     import os
     if not os.path.exists("OUTPUT_FOLDER/VIDEO_READER"):
         os.makedirs("OUTPUT_FOLDER/VIDEO_READER")
     image = cv2.UMat(image).get()
-    cv2.imwrite("OUTPUT_FOLDER/VIDEO_READER/" +
-                "iter_"+str(iter_idx)+"_batch_"+str(batch_idx)+".png", image)
+    cv2.imwrite("OUTPUT_FOLDER/VIDEO_READER/" + "output_list_num_" + str(output_list_num) +
+                "iter_" + str(iter_idx) + "_batch_sample_"+str(batch_sample_idx) + ".png", image)
 
 
 def main():
     # Args
-    args = parse_args()
-    video_path = args.video_path
-    rocal_cpu = False if args.rocal_gpu else True
-    batch_size = args.batch_size
-    user_sequence_length = args.sequence_length
-    display = args.display
-    num_threads = args.num_threads
-    random_seed = args.seed
-    tensor_format = types.NFHWC if args.NHWC else types.NFCHW
-    tensor_dtype = types.FLOAT16 if args.fp16 else types.FLOAT
+    # args = parse_args()
+    import os
+    path_variable = os.environ.get('ROCAL_DATA_PATH')
+    video_path = path_variable
+    rocal_cpu = True
+    batch_size = 3
+    user_sequence_length = 3
+    display = True
+    num_threads = 1
+    random_seed = 36
+    tensor_format = types.NFHWC
+    tensor_dtype = types.FLOAT
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu,
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=0, seed=random_seed, rocal_cpu=rocal_cpu,
                     tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         images = fn.readers.video(file_root=video_path, sequence_length=user_sequence_length,
                                   random_shuffle=False, image_type=types.RGB)
-        crop_size = (512, 960)
-        output_images = fn.crop_mirror_normalize(images,
-                                                 output_layout=tensor_format,
-                                                 output_dtype=tensor_dtype,
-                                                 crop=crop_size,
-                                                 mean=[0, 0, 0],
-                                                 std=[1, 1, 1])
-        pipe.set_outputs(output_images)
+        contrast_center_random = fn.random.uniform(range=[0.5, 5], shape=(user_sequence_length,))
+        contrast_output = fn.contrast(images, contrast_center=fn.per_frame(contrast_center_random), contrast=5.0, output_layout=types.NFHWC )
+        pipe.set_outputs(contrast_output)
     # Build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = ROCALVideoIterator(pipe, multiplier=pipe._multiplier,
+    data_loader = ROCALVideoIterator(pipe, multiplier=pipe._multiplier, tensor_layout= types.NHWC,
                                      offset=pipe._offset, display=display, sequence_length=user_sequence_length)
     import timeit
     start = timeit.default_timer()
     # Enumerate over the Dataloader
-    for epoch in range(int(args.num_epochs)):
+    for epoch in range(int(1)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            if args.print_tensor:
-                print("**************", i, "*******************")
-                print("**************starts*******************")
-                print("\n IMAGES : \n", it)
-                print("**************ends*******************")
-                print("**************", i, "*******************")
+            print("**************", i, "*******************")
+            print("**************starts*******************")
+            print("\n IMAGES : \n", it)
+            iter_num = 0
+            print(len(it))
+            # for batch_i in range(len(it)):
+            #     print("batch_i", batch_i)
+            #     draw_frames(it[batch_i], batch_i, iter_num, 'NCHW')
+            # exit(0)
+            iter_num = iter_num + 1
+            print("**************ends*******************")
+            print("**************", i, "*******************")
         data_loader.reset()
     # Your statements here
     stop = timeit.default_timer()

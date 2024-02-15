@@ -74,10 +74,12 @@ class UniformRand : public Parameter<T> {
         for (uint i = 0; i < _batch_size; i++) {
             renew_value();
             _array[i] = _updated_val;
+            std::cerr << "\n updated_val in parameter_random.h" << _updated_val;
         }
     }
 
     void renew() override {
+        std::cerr << "\n renew called";
         if (_array.size() > 0)
             renew_array();
         else

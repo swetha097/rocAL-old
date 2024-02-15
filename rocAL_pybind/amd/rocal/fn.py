@@ -227,8 +227,10 @@ def blur(*inputs, window_size=None, sigma=0.0, device=None, output_layout=types.
                         *(kwargs_pybind.values()))
     return (blur_image)
 
+def per_frame(*inputs):
+    return inputs[0]
 
-def contrast(*inputs, contrast=None, contrast_center=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8):
+def contrast(*inputs, contrast=None, contrast_center=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8, shape = 1):
     """!Adjusts contrast of the image
 
         @param inputs: the input image passed to the augmentation
@@ -241,8 +243,8 @@ def contrast(*inputs, contrast=None, contrast_center=None, device=None, output_l
         @return    Image with adjusted contrast
     """
     contrast = b.createFloatParameter(Pipeline._current_pipeline._handle, 
-        contrast) if isinstance(contrast, float) else contrast
-    contrast_center = b.createFloatParameter(Pipeline._current_pipeline._handle, contrast_center) if isinstance(
+        contrast, shape) if isinstance(contrast, float) else contrast
+    contrast_center = b.createFloatParameter(Pipeline._current_pipeline._handle, contrast_center, shape) if isinstance(
         contrast_center, float) else contrast_center
 
     # pybind call arguments
@@ -854,7 +856,7 @@ def color_twist(*inputs, brightness=1.0, contrast=1.0, hue=0.0,
     return (color_twist_image)
 
 
-def uniform(*inputs, range=[-1, 1], device=None):
+def uniform(*inputs, range=[-1, 1],  shape=(1,), device=None):
     """!Applies uniform random number generation to the input images.
 
         @param inputs                                               the input image passed to the augmentation
@@ -863,13 +865,13 @@ def uniform(*inputs, range=[-1, 1], device=None):
 
         @return    uniform random numbers
     """
-    output_param = b.createFloatUniformRand(range[0], range[1])
+    output_param = b.createFloatUniformRand(Pipeline._current_pipeline._handle, range[0], range[1], shape[0])
     return output_param
 
 
 def random_bbox_crop(*inputs, all_boxes_above_threshold=True, allow_no_crop=True, aspect_ratio=None, bbox_layout="",
                      threshold_type="iou", thresholds=None, crop_shape=None, num_attempts=1, scaling=None, seed=1,
-                     shape_layout="", input_shape=None, total_num_attempts=0, device=None, ltrb=True, labels=None):
+                     shape_layout="", input_shape=None, total_num_attempts=0, device=None, ltrb=True, labels=None, shape=(1,)):
     """!Applies random bounding box cropping to the input images.
 
         @param inputs (list)                                                 The input images to which random cropping is applied.
@@ -897,8 +899,8 @@ def random_bbox_crop(*inputs, all_boxes_above_threshold=True, allow_no_crop=True
         has_shape = True
         crop_width = crop_shape[0]
         crop_height = crop_shape[1]
-    scaling = b.createFloatUniformRand(scaling[0], scaling[1])
-    aspect_ratio = b.createFloatUniformRand(aspect_ratio[0], aspect_ratio[1])
+    scaling = b.createFloatUniformRand(Pipeline._current_pipeline._handle, scaling[0], scaling[1], shape[0])
+    aspect_ratio = b.createFloatUniformRand(Pipeline._current_pipeline._handle, aspect_ratio[0], aspect_ratio[1], shape[0])
 
     # pybind call arguments
     kwargs_pybind = {"all_boxes_above_threshold": all_boxes_above_threshold, "no_crop": allow_no_crop, "p_aspect_ratio": aspect_ratio, "has_shape": has_shape,
