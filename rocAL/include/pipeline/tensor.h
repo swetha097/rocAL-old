@@ -263,7 +263,9 @@ class TensorInfo {
         return _data_type_size;
     }
     bool is_image() const { return _is_image; }
+    bool is_external_source() const { return _is_external_source; }
     void set_metadata() { _is_metadata = true; }
+    void set_external_source() { _is_external_source = true; }
     bool is_metadata() const { return _is_metadata; }
     void set_roi_ptr(unsigned* roi_ptr) { _roi.reset_ptr(roi_ptr); }
     void copy_roi(void* roi_buffer) { _roi.copy(roi_buffer); }
@@ -285,6 +287,7 @@ class TensorInfo {
     std::vector<size_t> _max_shape;  //!< stores the the width and height dimensions in the tensor
     void reset_tensor_roi_buffers();
     bool _is_image = false;
+    bool _is_external_source = false;
     bool _is_metadata = false;
     size_t _channels = 3;  //!< stores the channel dimensions in the tensor
 };

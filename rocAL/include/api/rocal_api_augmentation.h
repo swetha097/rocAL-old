@@ -1098,4 +1098,11 @@ extern "C" RocalTensor ROCAL_API_CALL rocalSSDRandomCrop(RocalContext context, R
                                                          RocalTensorLayout output_layout = ROCAL_NONE,
                                                          RocalTensorOutputType output_datatype = ROCAL_UINT8);
 
+extern "C" RocalTensor ROCAL_API_CALL rocalExternalSource(RocalContext context, 
+                                                          RocalTensor p_input, 
+                                                          const char* file_path, 
+                                                          RocalTensorOutputType dtype, 
+                                                          int len, 
+                                                          bool is_output);
+
 #endif  // MIVISIONX_ROCAL_API_AUGMENTATION_H

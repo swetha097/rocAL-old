@@ -32,7 +32,7 @@ from amd.rocal import reductions
 import amd.rocal.types as types
 import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
-# import amd.rocal.reducer as r
+import amd.rocal.reducer as r
 import os
 
 def blend(*inputs, ratio=None, device=None, output_layout=types.NHWC, output_dtype=types.UINT8):

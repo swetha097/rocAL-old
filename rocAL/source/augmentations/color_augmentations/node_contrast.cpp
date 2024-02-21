@@ -32,16 +32,16 @@ void ContrastNode::create_node() {
     if (_node)
         return;
 
-    // if(_tensor_factor->info().is_external_source() == false) {
+    if(_tensor_factor->info().is_external_source() == false) { // new
         _factor.create_tensor(_graph, VX_TYPE_FLOAT32,  _tensor_factor->info().dims()[0]);
-    // } else {
-        // _factor.set_tensor(_tensor_factor->handle());
-    // }
-    // if(_tensor_center->info().is_external_source() == false) {
+    } else {
+        _factor.set_tensor(_tensor_factor->handle());
+    }
+    if(_tensor_center->info().is_external_source() == false) { // new
         _center.create_tensor(_graph, VX_TYPE_FLOAT32,  _tensor_center->info().dims()[0]);
-    // } else {
-        // _center.set_tensor(_tensor_center->handle());
-    // }
+    } else {
+        _center.set_tensor(_tensor_center->handle());
+    }
     int input_layout = static_cast<int>(_inputs[0]->info().layout());
     int output_layout = static_cast<int>(_outputs[0]->info().layout());
     int roi_type = static_cast<int>(_inputs[0]->info().roi_type());
@@ -58,23 +58,22 @@ void ContrastNode::create_node() {
 void ContrastNode::init(float contrast_factor, float contrast_center) {
     _factor.set_param(contrast_factor);
     _center.set_param(contrast_center);
-// }
 }
 
 void ContrastNode::init(Tensor *contrast_factor_tensor, Tensor *contrast_center_tensor) {
     _tensor_factor = contrast_factor_tensor;
     _tensor_center = contrast_center_tensor;
-    // if(_tensor_factor->info().is_external_source() == false) {
+    if(_tensor_factor->info().is_external_source() == false) { // new
         _factor.set_param(core(std::get<FloatParam*>(contrast_factor_tensor->get_param())));
-    // }
-    // if(_tensor_center->info().is_external_source() == false) {
+    }
+    if(_tensor_center->info().is_external_source() == false) { // new
         _center.set_param(core(std::get<FloatParam*>(contrast_center_tensor->get_param())));
-    // }
+    }
 }
 
 void ContrastNode::update_node() {
-    // if(_tensor_factor->info().is_external_source() == false)
+    if(_tensor_factor->info().is_external_source() == false) // new
         _factor.update_tensor();
-    // if(_tensor_center->info().is_external_source() == false)
+    if(_tensor_center->info().is_external_source() == false) // new
         _center.update_tensor();
 }
