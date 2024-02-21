@@ -24,6 +24,7 @@
 # @brief File containing randomization functions used for creating RNG generators
 
 import rocal_pybind as b
+from amd.rocal.pipeline import Pipeline
 
 
 def coin_flip(*inputs, probability=0.5):
@@ -40,7 +41,7 @@ def coin_flip(*inputs, probability=0.5):
     return output_array
 
 
-def uniform(*inputs, range=[-1, 1]):
+def uniform(*inputs, range=[-1, 1], shape=(1,)):
     """!Generates random values uniformly distributed within a specified range.
 
         @param inputs    list of input arguments.
@@ -48,5 +49,5 @@ def uniform(*inputs, range=[-1, 1]):
 
         @return    random values uniformly distributed within the specified range.
     """
-    output_param = b.createFloatUniformRand(range[0], range[1])
+    output_param = b.createFloatUniformRand(Pipeline._current_pipeline._handle, range[0], range[1], shape[0])
     return output_param

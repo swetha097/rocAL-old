@@ -53,6 +53,7 @@ class rocalTensor {
     virtual void copy_roi(void* roi_buffer) = 0;
     virtual std::vector<size_t> shape() = 0;
     virtual void set_dims(std::vector<size_t> dims) = 0;
+    // virtual void set_param(pParam param) = 0;
     virtual void set_mem_handle(void* buffer) = 0;
 };
 

@@ -38,7 +38,7 @@ THE SOFTWARE.
 #endif
 #include "commons.h"
 #include "rocal_api_tensor.h"
-
+#include "parameter_factory.h"
 /*! \brief Converts Rocal Memory type to OpenVX memory type
  *
  * @param mem input Rocal type
@@ -332,12 +332,14 @@ class Tensor : public rocalTensor {
     void copy_roi(void* roi_buffer) override { _info.copy_roi(roi_buffer); }
     size_t get_roi_dims_size() override { return _info.roi().no_of_dims(); }
     vx_tensor get_roi_tensor() { return _vx_roi_handle; }
+    pParam get_param() { return _param; }
     // create_from_handle() no internal memory allocation is done here since
     // tensor's handle should be swapped with external buffers before usage
     int create_from_handle(vx_context context);
     int create_virtual(vx_context context, vx_graph graph);
     bool is_handle_set() { return (_vx_handle != 0); }
     void set_dims(std::vector<size_t> dims) override { _info.set_dims(dims); }
+    void set_param(pParam param) { _param = param; }
     unsigned num_of_dims() override { return _info.num_of_dims(); }
     unsigned batch_size() override { return _info.batch_size(); }
     std::vector<size_t> dims() override { return _info.dims(); }
@@ -358,6 +360,7 @@ class Tensor : public rocalTensor {
     TensorInfo _info;                //!< The structure holding the info related to the stored OpenVX tensor
     vx_context _context = nullptr;
     vx_tensor _vx_roi_handle = nullptr;  //!< The OpenVX tensor for ROI
+    pParam _param; //!< The Parameter which is a part of the parameter factory
 };
 
 /*! \brief Contains a list of rocalTensors */

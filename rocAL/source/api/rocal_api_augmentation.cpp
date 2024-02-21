@@ -1230,8 +1230,8 @@ rocalContrast(
     RocalContext p_context,
     RocalTensor p_input,
     bool is_output,
-    RocalFloatParam p_contrast_factor,
-    RocalFloatParam p_contrast_center,
+    RocalTensor p_contrast_factor,
+    RocalTensor p_contrast_center,
     RocalTensorLayout output_layout,
     RocalTensorOutputType output_datatype) {
     Tensor* output = nullptr;
@@ -1242,8 +1242,8 @@ rocalContrast(
 
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Tensor*>(p_input);
-    auto contrast_factor = static_cast<FloatParam*>(p_contrast_factor);
-    auto contrast_center = static_cast<FloatParam*>(p_contrast_center);
+    auto contrast_factor = static_cast<Tensor*>(p_contrast_factor);
+    auto contrast_center = static_cast<Tensor*>(p_contrast_center);
     try {
         RocalTensorlayout op_tensor_layout = static_cast<RocalTensorlayout>(output_layout);
         RocalTensorDataType op_tensor_datatype = static_cast<RocalTensorDataType>(output_datatype);
