@@ -32,12 +32,12 @@ void ContrastNode::create_node() {
     if (_node)
         return;
 
-    if(_tensor_factor->info().is_external_source() == false) { // new
+    if(_tensor_factor->info().is_external_source() == false) {
         _factor.create_tensor(_graph, VX_TYPE_FLOAT32,  _tensor_factor->info().dims()[0]);
     } else {
         _factor.set_tensor(_tensor_factor->handle());
     }
-    if(_tensor_center->info().is_external_source() == false) { // new
+    if(_tensor_center->info().is_external_source() == false) {
         _center.create_tensor(_graph, VX_TYPE_FLOAT32,  _tensor_center->info().dims()[0]);
     } else {
         _center.set_tensor(_tensor_center->handle());
@@ -63,17 +63,17 @@ void ContrastNode::init(float contrast_factor, float contrast_center) {
 void ContrastNode::init(Tensor *contrast_factor_tensor, Tensor *contrast_center_tensor) {
     _tensor_factor = contrast_factor_tensor;
     _tensor_center = contrast_center_tensor;
-    if(_tensor_factor->info().is_external_source() == false) { // new
+    if(_tensor_factor->info().is_external_source() == false) {
         _factor.set_param(core(std::get<FloatParam*>(contrast_factor_tensor->get_param())));
     }
-    if(_tensor_center->info().is_external_source() == false) { // new
+    if(_tensor_center->info().is_external_source() == false) {
         _center.set_param(core(std::get<FloatParam*>(contrast_center_tensor->get_param())));
     }
 }
 
 void ContrastNode::update_node() {
-    if(_tensor_factor->info().is_external_source() == false) // new
+    if(_tensor_factor->info().is_external_source() == false)
         _factor.update_tensor();
-    if(_tensor_center->info().is_external_source() == false) // new
+    if(_tensor_center->info().is_external_source() == false)
         _center.update_tensor();
 }

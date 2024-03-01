@@ -58,8 +58,8 @@ rocalCreateIntUniformRand(
         std::vector<size_t> new_dims;
         new_dims = { context->user_batch_size(), 1 };
         auto output_info = TensorInfo(std::move(new_dims),
-                           context->master_graph->mem_type(),
-                           RocalTensorDataType::INT32);
+                                      context->master_graph->mem_type(),
+                                      RocalTensorDataType::INT32);
         output_tensor = context->master_graph->create_tensor(output_info, false);
         output_tensor->set_param(ParameterFactory::instance()->create_uniform_int_rand_param(start, end));
     } catch (const std::exception& e) {
@@ -145,10 +145,10 @@ rocalCreateFloatRand(
         std::vector<size_t> new_dims;
         new_dims = { context->user_batch_size(), 1 };
         auto output_info = TensorInfo(std::move(new_dims),
-                            context->master_graph->mem_type(),
-                            RocalTensorDataType::FP32,
-                            RocalTensorlayout::NONE,
-                            RocalColorFormat::U8);
+                                      context->master_graph->mem_type(),
+                                      RocalTensorDataType::FP32,
+                                      RocalTensorlayout::NONE,
+                                      RocalColorFormat::U8);
         output_tensor = context->master_graph->create_tensor(output_info, false);
         output_tensor->set_param(ParameterFactory::instance()->create_custom_float_rand_param(values,
                                                                                                 frequencies,
@@ -166,14 +166,12 @@ rocalCreateFloatParameter(RocalContext p_context, float val, uint shape) {
     auto context = static_cast<Context*>(p_context);
     try {
         std::vector<size_t> new_dims;
-        std::cerr << "\n shape :: " << shape;
-        std::cerr << "\n context->user_batch_size() :: " << context->user_batch_size();
         new_dims = { context->user_batch_size() * shape, 1 };
         auto output_info = TensorInfo(std::move(new_dims),
-                           context->master_graph->mem_type(),
-                           RocalTensorDataType::FP32,
-                            RocalTensorlayout::NONE,
-                           RocalColorFormat::U8); 
+                                      context->master_graph->mem_type(),
+                                      RocalTensorDataType::FP32,
+                                      RocalTensorlayout::NONE,
+                                      RocalColorFormat::U8); 
         output_tensor = context->master_graph->create_tensor(output_info, false);
         output_tensor->set_param(ParameterFactory::instance()->create_single_value_float_param(val));
     } catch (const std::exception& e) {
