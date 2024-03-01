@@ -128,27 +128,24 @@ def draw_frames(image, output_list_num, batch_sample_idx, iter_idx, layout):
 
 def main():
     # Args
-    # args = parse_args()
-    import os
-    path_variable = os.environ.get('ROCAL_DATA_PATH')
-    video_path = path_variable
-    rocal_cpu = True
-    batch_size = 7
-    user_sequence_length = 4
-    display = True
-    num_threads = 1
-    random_seed = 36
-    tensor_format = types.NFHWC
-    tensor_dtype = types.FLOAT
+    args = parse_args()
+    video_path = args.video_path
+    rocal_cpu = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    user_sequence_length = args.sequence_length
+    display = args.display
+    num_threads = args.num_threads
+    random_seed = args.seed
+    tensor_format = types.NFHWC if args.NHWC else types.NFCHW
+    tensor_dtype = types.FLOAT16 if args.fp16 else types.FLOAT
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=0, seed=random_seed, rocal_cpu=rocal_cpu,
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu,
                     tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         images = fn.readers.video(file_root=video_path, sequence_length=user_sequence_length,
                                   random_shuffle=False, image_type=types.RGB)
         contrast_center_random = fn.random.uniform(range=[0.5, 5], shape=(user_sequence_length,))
-        # fn_per_frame = fn.per_frame(contrast_center_random)
         output_ex_source = fn.external_source(images, source = generate_random_numbers, size=user_sequence_length * batch_size)
         contrast_output = fn.contrast(images, contrast_center=fn.per_frame(output_ex_source), contrast=fn.per_frame(contrast_center_random), output_layout=types.NFHWC)
         pipe.set_outputs(contrast_output)
@@ -160,23 +157,21 @@ def main():
     import timeit
     start = timeit.default_timer()
     # Enumerate over the Dataloader
-    for epoch in range(int(1)):
+    for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\n IMAGES : \n", it)
-            iter_num = 0
-            print(len(it))
-            print("HEREEEEE")
-            # for batch_i in range(len(it)):
-            #     print("batch_i", batch_i)
-            #     draw_frames(it[batch_i], batch_i, iter_num, 'NCHW')
-            # exit(0)
-            iter_num = iter_num + 1
-            print("**************ends*******************")
-            print("**************", i, "*******************")
-        # data_loader.reset()
+            if args.print_tensor:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\n IMAGES : \n", it)
+                iter_num = 0
+                for batch_i in range(len(it)):
+                    print("batch_i", batch_i)
+                    draw_frames(it[batch_i], batch_i, iter_num, 'NCHW')
+                iter_num = iter_num + 1
+                print("**************ends*******************")
+                print("**************", i, "*******************")
+        data_loader.reset()
     # Your statements here
     stop = timeit.default_timer()
 

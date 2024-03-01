@@ -65,8 +65,6 @@ class ParameterVX {
         vx_size dims[1] = { batch_size };
         _batch_size = batch_size;
         _param->create_array(_batch_size);
-        vx_size stride_output[1] = {sizeof(get_array()[0])};
-        // _tensor = vxCreateTensorFromHandle(vxGetContext((vx_reference)graph->get()), 1, dims, data_type, 0, stride_output, get_array().data(), VX_MEMORY_TYPE_HOST);
         _tensor = vxCreateTensor(vxGetContext((vx_reference)graph->get()), 1, dims, data_type, 0);
         update_tensor();
     }
@@ -127,22 +125,12 @@ class ParameterVX {
 
     void update_tensor() {
         vx_status status;
-        std::cerr << "\n paramater_vx.h - update_tensor - get_array()[0]" << get_array()[0];
-        std::cerr << "\n sizeof(get_array()[0]) - " << sizeof(get_array()[0]);
         vx_size stride_output[1] = {sizeof(get_array()[0])};
         status = vxCopyTensorPatch((vx_tensor)_tensor, 1, nullptr, nullptr, stride_output, get_array().data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
         if (status != VX_SUCCESS)
             THROW("ERROR: vxCopyArrayRange failed in update_tensor (ParameterVX)" + TOSTR(status));
     }
-// Remove this function later
-    // void update_tensor() {
-    //     vx_status status;
-    //     // for (uint i = 0; i < _batch_size; i++) { 
-    //     //     _arrVal[i] = renew();
-    //     // }
-    //     vx_size stride_output[1] = {sizeof(float)};
-    //     vx_size output_dims[1];
-    // }
+
     T renew() {
         _param->renew();
         return _param->get();

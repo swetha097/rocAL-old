@@ -97,8 +97,6 @@ rocalCreateFloatUniformRand(RocalContext p_context,
     auto context = static_cast<Context*>(p_context);
     try {
         std::vector<size_t> new_dims;
-        std::cerr << "\n shape :: " << shape;
-        std::cerr << "\n context->user_batch_size() :: " << context->user_batch_size();
         auto total_size = context->user_batch_size() * shape;
         new_dims = {total_size, 1};
         auto output_info = TensorInfo(std::move(new_dims),

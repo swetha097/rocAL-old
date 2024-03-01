@@ -2176,7 +2176,7 @@ rocalExternalSource(RocalContext p_context,
     try {
         RocalTensorDataType op_tensor_datatype = static_cast<RocalTensorDataType>(dtype);
         TensorInfo output_info, input_info;
-        std::vector<size_t> new_dims = {size , 1};
+        std::vector<size_t> new_dims = {static_cast<size_t>(size) , 1};
         auto info = TensorInfo(std::move(new_dims),
                             context->master_graph->mem_type(),
                             op_tensor_datatype,
